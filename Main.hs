@@ -1,13 +1,14 @@
 -- Hauptmodul des Programms (Einstiegspunkt)
 module Main where
 
+import System.Environment (getArgs)
 import qualified CLI as CLI
 
+-- Liest Kommandozeilenargumente und leitet sie an das CLI-Modul weiter
 main :: IO ()
 main = do
-  putStrLn "Bitte gib den vollständigen Befehl ein (z.B. --insert data.json Ali 100):"
-  input <- getLine
-  let args = words input
-  case args of
-    (cmd:rest) -> CLI.handleCommand cmd rest
-    _ -> putStrLn "Usage: <command> [options]"
+    args <- getArgs
+    case args of
+        (cmd:rest) -> CLI.handleCommand cmd rest
+        _          -> putStrLn "Usage: <command> [args]"
+
