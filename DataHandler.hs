@@ -7,13 +7,13 @@ module DataHandler
 import Data.Aeson (decodeFileStrict, encodeFile)
 import Record (Record)
 
--- JSON-Datei einlesen → Liste von Records zurückgeben
--- Falls Datei nicht existiert → leere Liste
+-- Datei lesen → Liste von Records zurückgeben
+-- Wenn Datei leer/fehlt → []
 loadRecords :: FilePath -> IO [Record]
 loadRecords path = do
-  maybeList <- decodeFileStrict path      -- JSON einlesen
-  return (maybe [] id maybeList)          -- Nothing → []
+    result <- decodeFileStrict path
+    return (maybe [] id result)
 
--- Liste von Records wieder als JSON speichern
+-- Liste von Records als JSON speichern
 saveRecords :: FilePath -> [Record] -> IO ()
 saveRecords = encodeFile

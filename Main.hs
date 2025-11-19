@@ -1,4 +1,4 @@
--- Hauptmodul des Programms (Einstiegspunkt)
+-- Hauptmodul des Programms
 module Main where
 
 import System.Environment (getArgs)
