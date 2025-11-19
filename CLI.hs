@@ -1,48 +1,72 @@
--- Modul zur Verarbeitung der CLI-Befehle
+-- Modul für die Verarbeitung der CLI-Befehle
 module CLI (handleCommand) where
 
-import DataHandler (loadRecords, saveRecords)
-import Record (Record(..))
+import Record
+import DataHandler
 
--- Diese Funktion empfängt den Befehl und seine Argumente
+-- Entscheidet, welcher Befehl ausgeführt wird
 handleCommand :: String -> [String] -> IO ()
-handleCommand cmd args = case cmd of
+handleCommand "--insert" args = handleInsert args
+handleCommand "--delete" args = handleDelete args         
+                                                        
+                                                        -- @Gry  TODO  filter und fuery müssen hier augerufen werden 
+                                                            
+handleCommand cmd _           = putStrLn ("Unbekannter Befehl: " ++ cmd)
 
-    -- ===========================
-    -- --insert <file> <id> <name> <value>
-    -- ===========================
-    "--insert" ->
-        case args of
-            (file:idStr:name:valueStr:_) ->
-                case (reads idStr, reads valueStr) of
-                    ([(rid,"")], [(val,"")]) -> do
-                        records <- loadRecords file
-                        let newRecord = Record rid name val
-                        let updated = records ++ [newRecord]
-                        saveRecords file updated
-                        putStrLn "✔ Record inserted."
-                    _ -> putStrLn "Fehler: ID und Value müssen Zahlen sein."
 
-            _ -> putStrLn "Usage: --insert <file> <id> <name> <value>"
+--------------------------------------------------
+-- Insert (Task 5)
+--------------------------------------------------
 
-    -- ===========================
-    -- --delete <file> <id>
-    -- ===========================
-    "--delete" ->
-        case args of
-            (file:idStr:_) ->
-                case reads idStr of
-                    [(rid,"")] -> do
-                        records <- loadRecords file
-                        let updated = filter (\r -> Record.id r /= rid) records
-                        saveRecords file updated
-                        putStrLn "✔ Record deleted (falls vorhanden)."
-                    _ -> putStrLn "Fehler: ID muss eine Zahl sein."
+handleInsert :: [String] -> IO ()
+handleInsert (file:idStr:name:valueStr:_) = do 
+    -- ID und Wert von Text zu Zahlen umwandeln
+    let newId    = read idStr
+    let newValue = read valueStr  -- Alte Einträge laden
+    records <- loadRecords file     -- Neuen Eintrag erstellen
+    let newRecord = Record newId name newValue   -- Eintrag an Liste anhängen
+    let updated = records ++ [newRecord]  -- Datei aktualisieren
+    saveRecords file updated
+    putStrLn ("Neuer Eintrag hinzugefügt: " ++ show newRecord)
 
-            _ -> putStrLn "Usage: --delete <file> <id>"
+-- Wenn Argumente fehlen
+handleInsert _ =
+    putStrLn "Benutzung: --insert <Datei> <ID> <Name> <Wert>"
 
-    -- Fallback für unbekannte Befehle
-    _ -> do
-        putStrLn $ "Empfangener Befehl: " ++ cmd
-        putStrLn $ "Argumente: " ++ show args
-        putStrLn "Unbekannter Befehl."
+
+--------------------------------------------------
+-- Delete (Task 6)
+--------------------------------------------------
+
+handleDelete :: [String] -> IO ()
+handleDelete (file:idStr:_) = do
+    -- ID konvertieren
+    let rid = read idStr :: Int
+
+    -- Einträge laden
+    records <- loadRecords file
+
+    -- Eintrag entfernen
+    let updated = filter (\r -> Record.id r /= rid) records
+
+    -- Speichern
+    saveRecords file updated
+
+    putStrLn ("Eintrag mit ID " ++ show rid ++ " wurde gelöscht (falls vorhanden).")
+
+handleDelete _ =
+    putStrLn "Benutzung: --delete <Datei> <ID>"
+
+
+
+--------------------------------------------------
+-- filter (Task 7)
+--------------------------------------------------
+
+-- @Gry
+
+--------------------------------------------------
+-- query (Task 8)
+--------------------------------------------------
+
+-- @Gry
