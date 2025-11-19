@@ -1,3 +1,4 @@
+-- Definition eines Records
 module Record where
 
 import GHC.Generics (Generic)
