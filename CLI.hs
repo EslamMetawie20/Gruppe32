@@ -13,6 +13,8 @@ handleCommand "--insert" args = handleInsert args
 handleCommand "--delete" args = handleDelete args         
 handleCommand "--filter" args = handleFilter args
 handleCommand "--query"  args = handleQuery args
+handleCommand "--out" args = handleOut args
+
                                                             
 handleCommand cmd _           = putStrLn ("Unbekannter Befehl: " ++ cmd)
 
@@ -111,3 +113,34 @@ startsWith _ [] = False
 startsWith (p:ps) (s:ss)
     | p == s    = startsWith ps ss
     | otherwise = False
+
+
+
+
+
+
+
+
+
+--------------------------------------------------
+-- out (Task 9)
+--------------------------------------------------
+
+
+
+handleOut :: [String] -> IO ()
+handleOut ("-":file:_) = do
+    records <- loadRecords file
+    -- JSON erzeugen, indem wir temporär in eine Datei speichern
+    let tempFile = "__temp_output.json"
+    saveRecords tempFile records      -- schreibt echtes JSON
+    json <- readFile tempFile
+    putStrLn json                    -- JSON auf Konsole ausgeben
+
+handleOut (outfile:file:_) = do
+    records <- loadRecords file
+    saveRecords outfile records      -- direktes JSON in Datei
+    putStrLn ("Ausgabe gespeichert in: " ++ outfile)
+
+handleOut _ =
+    putStrLn "Benutzung: --out <Datei> <JSON-Datei>   oder   --out - <Datei>"
