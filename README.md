@@ -137,24 +137,30 @@ query ["data.json", "ax"]
 ### Ausgabe auf Konsole:
 
 ```
---out - <Datei>
+out - <Datei>
 ```
 
 ### Ausgabe in Datei:
 
 ```
---out <Zieldatei> <Quelldatei>
+out [<Zieldatei>, <Quelldatei>]
 ```
 
-**Beispiel:**
+**Beispiel 1:**
+→ gibt den JSON-Inhalt auf der Konsole aus
+```
+out ["output.json", "data.json"]
 
 ```
---out output.json data.json
+**Beispiel 2:**
+→ speichert den JSON-Inhalt in einer neuen Datei
 ```
+out ["_", "data.json"]
 
+```
 ---
 
-# 🧪 Nutzung in GHCI (Kurzbefehle)
+# Nutzung in GHCI (Kurzbefehle)
 
 Wenn Kurzbefehle aktiviert sind:
 
@@ -168,7 +174,7 @@ out ["-","data.json"]
 
 ---
 
-# ✅ Fehlerbehandlung
+# Fehlerbehandlung
 
 Das Tool prüft automatisch:
 
@@ -180,7 +186,7 @@ Das Tool prüft automatisch:
 
 ---
 
-# 📌 Hinweis
+# Hinweis
 
 Alle Operationen überschreiben die JSON-Datei sofort. Falls nötig vorher ein Backup anlegen.
 
