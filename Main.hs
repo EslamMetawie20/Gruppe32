@@ -2,7 +2,7 @@
 module Main where
 
 import System.Environment (getArgs)
-import qualified CLI as CLI
+import CLI
 
 -- Liest die Argumente und leitet sie an das CLI-Modul weiter
 main :: IO ()

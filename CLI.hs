@@ -1,5 +1,12 @@
 -- Modul für die Verarbeitung der CLI-Befehle
-module CLI (handleCommand) where
+module CLI 
+    ( handleCommand
+    , insert
+    , delete
+    , filterR   -- die Funktion heißt filterR, um Konflikte mit Prelude.filter zu vermeiden
+    , query
+    , out
+    ) where
 
 import Record
 import DataHandler
@@ -155,3 +162,20 @@ handleOut (outfile:file:_) = do
 
 handleOut _ =
     putStrLn "Benutzung: --out <Datei> <JSON-Datei>   oder   --out - <Datei>"
+
+    
+insert :: [String] -> IO ()
+insert = handleInsert
+
+delete :: [String] -> IO ()
+delete = handleDelete
+
+filterR :: [String] -> IO ()
+filterR = handleFilter
+
+query :: [String] -> IO ()
+query = handleQuery
+
+out :: [String] -> IO ()
+out = handleOut
+
