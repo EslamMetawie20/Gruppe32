@@ -26,7 +26,7 @@ Falls jemand zusätzliche CLI-Befehle oder Funktionen vorschlagen möchte (auße
 | 8  | `--query`                 | Einträge nach Feldinhalt anzeigen (z. B. Name enthält Text)                                         | 2h      | **Gary**       | Nr 4          | Suche nach mehreren Feldern; Case-insensitive (Done)         | ja       |
 | 9  | Output-Option             | Parameter `--out` → Ausgabe in Datei oder stdout (JSON-Format)                                      | 1h      | **Eslam**      | Nr 4          | Ideen für farbige Konsole oder JSON-Export ⬇️                |   ja       |
 | 10 | Fehlerbehandlung          | Falsche Parameter, leere Dateien, I/O-Fehler mit `case` und Guards                                  | 2h      | **Gary**       | Nr 4–8        | —                                                            |          |
-| 11 | ID-Duplikate verhindern | Beim Insert prüfen, ob die ID bereits existiert. Falls ja → kein Insert, Fehlermeldung ausgeben. | 1h      | wer ??         | Nr 5          | Option für automatische ID-Vergabe                           |          |
+| 11 | ID-Duplikate verhindern | Beim Insert prüfen, ob die ID bereits existiert. Falls ja → kein Insert, Fehlermeldung ausgeben. | 1h      | Eslam         | Nr 5          | Option für automatische ID-Vergabe                           |   ja       |
 | 12 | Tests & Merge             | Unit-Tests, Review, Merge in `main`                                                                 | 3h      | **Alle**       | alle          | Ideen für Benchmark oder Performance-Test ⬇️                 |          |
 
 

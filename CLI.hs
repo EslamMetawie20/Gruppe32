@@ -27,12 +27,28 @@ handleInsert :: [String] -> IO ()
 handleInsert (file:idStr:name:valueStr:_) = do 
     -- ID und Wert von Text zu Zahlen umwandeln
     let newId    = read idStr
-    let newValue = read valueStr  -- Alte Einträge laden
-    records <- loadRecords file     -- Neuen Eintrag erstellen
-    let newRecord = Record newId name newValue   -- Eintrag an Liste anhängen
-    let updated = records ++ [newRecord]  -- Datei aktualisieren
-    saveRecords file updated
-    putStrLn ("Neuer Eintrag hinzugefügt: " ++ show newRecord)
+    let newValue = read valueStr  
+    
+    -- Alte Einträge laden
+    records <- loadRecords file     
+
+    -- Duplicate check with guards
+    let idExists = any checkId records
+        checkId r = Record.id r == newId
+
+    if idExists 
+        then putStrLn "Error : diese ID ist schon da"
+        else do 
+            -- Neuen Eintrag erstellen
+            let newRecord = Record newId name newValue   
+            
+            -- Eintrag an Liste anhängen
+            let updated = records ++ [newRecord]  
+            
+            -- Datei aktualisieren
+            saveRecords file updated
+
+            putStrLn ("Neuer Eintrag hinzugefügt: " ++ show newRecord)
 
 -- Wenn Argumente fehlen
 handleInsert _ =
@@ -113,11 +129,6 @@ startsWith _ [] = False
 startsWith (p:ps) (s:ss)
     | p == s    = startsWith ps ss
     | otherwise = False
-
-
-
-
-
 
 
 
