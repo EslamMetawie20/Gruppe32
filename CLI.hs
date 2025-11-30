@@ -31,31 +31,31 @@ handleCommand cmd _           = putStrLn ("Unbekannter Befehl: " ++ cmd)
 --------------------------------------------------
 
 handleInsert :: [String] -> IO ()
-handleInsert (file:idStr:name:valueStr:_) = do 
-    -- ID und Wert von Text zu Zahlen umwandeln
-    let newId    = read idStr
-    let newValue = read valueStr  
-    
-    -- Alte Einträge laden
-    records <- loadRecords file     
+handleInsert (file:idStr:name:valueStr:_) = 
+    case (readMaybe idStr :: Maybe Int, readMaybe valueStr :: Maybe Double) of
+        (Nothing, _) -> putStrLn "Fehler: ID muss eine Ganzzahl sein."
+        (_, Nothing) -> putStrLn "Fehler: Wert muss eine Zahl sein."
+        (Just newId, Just newValue) -> do
+            -- Alte Einträge laden
+            records <- loadRecords file     
 
-    -- Duplicate check with guards
-    let idExists = any checkId records
-        checkId r = Record.id r == newId
+            -- Duplicate check with guards
+            let idExists = any checkId records
+                checkId r = Record.id r == newId
 
-    if idExists 
-        then putStrLn "Error : diese ID ist schon da"
-        else do 
-            -- Neuen Eintrag erstellen
-            let newRecord = Record newId name newValue   
-            
-            -- Eintrag an Liste anhängen
-            let updated = records ++ [newRecord]  
-            
-            -- Datei aktualisieren
-            saveRecords file updated
+            if idExists 
+                then putStrLn "Error: Diese ID ist schon vorhanden."
+                else do 
+                    -- Neuen Eintrag erstellen
+                    let newRecord = Record newId name newValue   
+                    
+                    -- Eintrag an Liste anhängen
+                    let updated = records ++ [newRecord]  
+                    
+                    -- Datei aktualisieren
+                    saveRecords file updated
 
-            putStrLn ("Neuer Eintrag hinzugefügt: " ++ show newRecord)
+                    putStrLn ("Neuer Eintrag hinzugefügt: " ++ show newRecord)
 
 -- Wenn Argumente fehlen
 handleInsert _ =
@@ -67,20 +67,20 @@ handleInsert _ =
 --------------------------------------------------
 
 handleDelete :: [String] -> IO ()
-handleDelete (file:idStr:_) = do
-    -- ID konvertieren
-    let rid = read idStr :: Int
+handleDelete (file:idStr:_) = 
+    case readMaybe idStr :: Maybe Int of
+        Nothing -> putStrLn "Fehler: ID muss eine Ganzzahl sein."
+        Just rid -> do
+            -- Einträge laden
+            records <- loadRecords file
 
-    -- Einträge laden
-    records <- loadRecords file
+            -- Eintrag entfernen
+            let updated = filter (\r -> Record.id r /= rid) records
 
-    -- Eintrag entfernen
-    let updated = filter (\r -> Record.id r /= rid) records
+            -- Speichern
+            saveRecords file updated
 
-    -- Speichern
-    saveRecords file updated
-
-    putStrLn ("Eintrag mit ID " ++ show rid ++ " wurde gelöscht (falls vorhanden).")
+            putStrLn ("Eintrag mit ID " ++ show rid ++ " wurde gelöscht (falls vorhanden).")
 
 handleDelete _ =
     putStrLn "Benutzung: --delete <Datei> <ID>"
