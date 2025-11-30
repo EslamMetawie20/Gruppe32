@@ -27,7 +27,7 @@ Falls jemand zusätzliche CLI-Befehle oder Funktionen vorschlagen möchte (auße
 | 9  | Output-Option             | `--out`: Ausgabe in Datei oder stdout (JSON-Format)                                                 | 1h      | **Eslam**      | Nr 4          | ja       |
 | 10 | Fehlerbehandlung          | Falsche Parameter, leere Dateien, I/O-Fehler abfangen                                               | 2h      | **Gary**       | Nr 4–8        |          |
 | 11 | ID-Duplikate verhindern   | Beim Insert prüfen, ob ID existiert → Fehlermeldung wenn ja                                         | 1h      | **Eslam**      | Nr 5          | ja       |
-| 12 | Tests & Merge             | Unit-Tests, Review, Merge in `main`                                                                 | 3h      | **Alle**       | alle          |          |
+| 12 | Tests & Merge             | Review, Merge in `main`                                                                 | 3h      | **Alle**       | alle          |          |
 
 
 ### ✅ Definition of Done
