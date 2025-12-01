@@ -26,9 +26,11 @@ handleCommand "--query"  args = handleQuery args
 handleCommand "--stats"  args = handleStats args
 handleCommand "--out"    args = handleOut args
 
-handleCommand "--help"   args = handleHelp args
-handleCommand "--version"args = handleVersion args
-handleCommand "--update" args = handleUpdate args
+-- handleCommand "--help"   args = handleHelp args
+-- handleCommand "--version"args = handleVersion args
+-- handleCommand "--update" args = handleUpdate args
+
+
 
 -- Interface bauen ?!?
 -- Ein mögliches Interface für CLI-Befehle könnte so aussehen, um Befehle zentral zu definieren und zu verwalten:
@@ -76,6 +78,12 @@ handleCommand "--update" args = handleUpdate args
 -- Dies würde eine zentralisierte Definition und einfachere Erweiterbarkeit ermöglichen,
 -- insbesondere für die Generierung von Hilfetexten oder die Validierung von Befehlen.
 
+ -- Interaktiver modus, dann kann man in der konsole (nach eingabe der datei) direkt mit "help" "version" "update" "insert" "delete" "filter" "query" "stats" "out" interagieren
+ -- sachen im ram bearbeiten und dort lassen (nach wahl speichern)
+
+ -- auto backup
+
+ -- pretty print
 
 handleCommand cmd _ = putStrLn ("Unbekannter Befehl: " ++ cmd)
 
