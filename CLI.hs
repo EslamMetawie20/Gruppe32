@@ -26,8 +26,67 @@ handleCommand "--query"  args = handleQuery args
 handleCommand "--stats"  args = handleStats args
 handleCommand "--out"    args = handleOut args
 
+handleCommand "--help"   args = handleHelp args
+handleCommand "--version"args = handleVersion args
+handleCommand "--update" args = handleUpdate args
+
+-- Interface bauen ?!?
+-- Ein mögliches Interface für CLI-Befehle könnte so aussehen, um Befehle zentral zu definieren und zu verwalten:
+--
+-- data CLICommand = CLICommand
+--   { cmdName        :: String             -- Der Name des Befehls (z.B. "--insert")
+--   , cmdDescription :: String             -- Eine kurze Beschreibung für Hilfetexte
+--   , cmdUsage       :: String             -- Beispiel für die korrekte Benutzung
+--   , cmdHandler     :: [String] -> IO ()  -- Die Funktion, die den Befehl ausführt
+--   }
+--
+-- Eine Liste aller verfügbaren Befehle könnte dann so aussehen:
+-- allCommands :: [CLICommand]
+-- allCommands =
+--   [ CLICommand
+--       { cmdName        = "--insert"
+--       , cmdDescription = "Fügt einen neuen Datensatz hinzu."
+--       , cmdUsage       = "--insert <Datei> <ID> <Name> <Wert>"
+--       , cmdHandler     = handleInsert
+--       }
+--   , CLICommand
+--       { cmdName        = "--delete"
+--       , cmdDescription = "Löscht einen Datensatz anhand der ID."
+--       , cmdUsage       = "--delete <Datei> <ID>"
+--       , cmdHandler     = handleDelete
+--       }
+--   , CLICommand
+--       { cmdName        = "--help"
+--       , cmdDescription = "Zeigt diese Hilfe an."
+--       , cmdUsage       = "--help"
+--       , cmdHandler     = handleHelp
+--       }
+--   -- ... weitere Befehle
+--   ]
+--
+-- Die `handleCommand` Funktion könnte dann so umgeschrieben werden, um diese Liste zu nutzen:
+-- import Data.List (find)
+--
+-- handleCommand :: String -> [String] -> IO ()
+-- handleCommand cmd args =
+--   case find (\c -> cmdName c == cmd) allCommands of
+--     Just command -> cmdHandler command args
+--     Nothing      -> putStrLn ("Unbekannter Befehl: " ++ cmd)
+--
+-- Dies würde eine zentralisierte Definition und einfachere Erweiterbarkeit ermöglichen,
+-- insbesondere für die Generierung von Hilfetexten oder die Validierung von Befehlen.
+
+
 handleCommand cmd _ = putStrLn ("Unbekannter Befehl: " ++ cmd)
 
+
+-- Definiere die ANSI-Codes als Strings
+red, green, blue, bold, reset :: String
+red   = "\ESC[31m"
+green = "\ESC[32m"
+blue  = "\ESC[34m"
+bold  = "\ESC[1m"
+reset = "\ESC[0m"
 
 --------------------------------------------------
 -- Insert (Task 5)
@@ -36,22 +95,21 @@ handleCommand cmd _ = putStrLn ("Unbekannter Befehl: " ++ cmd)
 handleInsert :: [String] -> IO ()
 handleInsert (file:idStr:name:valueStr:_) =
   case (readMaybe idStr :: Maybe Int, readMaybe valueStr :: Maybe Double) of
-    (Nothing, _) -> putStrLn "Fehler: ID muss eine Ganzzahl sein."
-    (_, Nothing) -> putStrLn "Fehler: Wert muss eine Zahl sein."
+    (Nothing, _) -> putStrLn $ red ++ "Fehler: ID muss eine Ganzzahl sein." ++ reset
+    (_, Nothing) -> putStrLn $ red ++ "Fehler: Wert muss eine Zahl sein." ++ reset
     (Just newId, Just newValue) -> do
       records <- loadRecords file
       let idExists = any (\r -> Record.id r == newId) records
       if idExists
-        then putStrLn "Error: Diese ID ist schon vorhanden."
+        then putStrLn $ red ++ "Error: Diese ID ist schon vorhanden." ++ reset
         else do
           let newRecord = Record newId name newValue
           let updated   = records ++ [newRecord]
           saveRecords file updated
-          putStrLn ("Neuer Eintrag hinzugefügt: " ++ show newRecord)
+          putStrLn (green ++ "Neuer Eintrag hinzugefügt: " ++ show newRecord ++ reset)
 
-handleInsert _ =
---   putStrLn "Benutzung: --insert <Datei> <ID> <Name> <Wert>"
-    putStrLn "In GHCI: insert [\"datei\", \"id\", \"name\", \"value\"]"
+handleInsert _ = 
+    putStrLn "Benutzung: --insert <Datei> <ID> <Name> <Wert>"
 
 
 --------------------------------------------------
@@ -61,16 +119,15 @@ handleInsert _ =
 handleDelete :: [String] -> IO ()
 handleDelete (file:idStr:_) =
   case readMaybe idStr :: Maybe Int of
-    Nothing -> putStrLn "Fehler: ID muss eine Ganzzahl sein."
+    Nothing -> putStrLn $ red ++ "Fehler: ID muss eine Ganzzahl sein." ++ reset
     Just rid -> do
       records <- loadRecords file
       let updated = filter (\r -> Record.id r /= rid) records
       saveRecords file updated
-      putStrLn ("Eintrag mit ID " ++ show rid ++ " wurde gelöscht (falls vorhanden).")
+      putStrLn (green ++ "Eintrag mit ID " ++ show rid ++ " wurde gelöscht (falls vorhanden)." ++ reset)
 
 handleDelete _ =
---   putStrLn "Benutzung: --delete <Datei> <ID>"
-    putStrLn "In GHCI: delete [\"datei\", \"id\"]"
+  putStrLn "Benutzung: --delete <Datei> <ID>"
 
 
 --------------------------------------------------
@@ -83,13 +140,12 @@ handleFilter (file:thresholdStr:_) =
     Just threshold -> do
       records <- loadRecords file
       let filtered = filter (\r -> value r > threshold) records
-      putStrLn ("Einträge mit Wert größer als " ++ show threshold ++ ":")
+      putStrLn (blue ++ "Einträge mit Wert größer als " ++ show threshold ++ ":" ++ reset)
       mapM_ print filtered
-    Nothing -> putStrLn "Fehler: Wert muss eine Zahl sein."
+    Nothing -> putStrLn $ red ++ "Fehler: Wert muss eine Zahl sein." ++ reset
 
 handleFilter _ =
---   putStrLn "Benutzung: --filter <Datei> <Wert>"
-    putStrLn "In GHCI: filter ["datei", "threshold"]"
+  putStrLn "Benutzung: --filter <Datei> <Wert>"
 
 
 --------------------------------------------------
@@ -101,12 +157,12 @@ handleQuery (file:searchStr:_) = do
   records <- loadRecords file
   let searchLower = map toLower searchStr
   let found = filter (\r -> isInfixOf searchLower (map toLower (Record.name r))) records
-  putStrLn ("Einträge mit Name, der \"" ++ searchStr ++ "\" enthält:")
+  putStrLn (blue ++ "Einträge mit Name, der \"" ++ searchStr ++ "\" enthält:" ++ reset)
   mapM_ print found
 
 handleQuery _ =
---   putStrLn "Benutzung: --query <Datei> <Suchbegriff>"
-    putStrLn "In GHCI: query ["datei", "searchStr"]"
+  putStrLn "Benutzung: --query <Datei> <Suchbegriff>"
+
 
 
 --------------------------------------------------
@@ -117,7 +173,7 @@ handleStats :: [String] -> IO ()
 handleStats (file:_) = do
   records <- loadRecords file
   if null records
-    then putStrLn "Keine Daten vorhanden."
+    then putStrLn $ red ++ "Keine Daten vorhanden." ++ reset
     else do
       let values   = map Record.value records
       let total    = sum values
@@ -126,7 +182,7 @@ handleStats (file:_) = do
       let minVal   = minimum values
       let maxVal   = maximum values
 
-      putStrLn "Statistik:"
+      putStrLn (blue ++ "Statistik:" ++ reset)
       putStrLn ("  Anzahl:       " ++ show (length values))
       putStrLn ("  Summe:        " ++ show total)
       putStrLn ("  Durchschnitt: " ++ show average)
@@ -134,8 +190,7 @@ handleStats (file:_) = do
       putStrLn ("  Max:          " ++ show maxVal)
 
 handleStats _ =
---   putStrLn "Benutzung: --stats <Datei>"
-    putStrLn "In GHCI: stats ["datei"]"
+      putStrLn "Benutzung: --stats <Datei>"
 
 
 --------------------------------------------------
@@ -150,11 +205,10 @@ handleOut ("-":file:_) = do
 handleOut (outfile:file:_) = do
   records <- loadRecords file
   saveRecords outfile records
-  putStrLn ("Ausgabe gespeichert in: " ++ outfile)
+  putStrLn $ blue ++ "Ausgabe gespeichert in: " ++ outfile ++ reset
 
 handleOut _ =
---   putStrLn "Benutzung: --out <Datei> <JSON-Datei>   oder   --out - <Datei>"
-    putStrLn "In GHCI: out [\"datei\", \"jsondatei\"]   oder   out [\"-\", \"jsondatei\"]"
+  putStrLn "Benutzung: --out <Datei> <JSON-Datei>   oder   --out - <Datei>"
 
 
 --------------------------------------------------
