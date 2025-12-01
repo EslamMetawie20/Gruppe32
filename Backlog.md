@@ -18,17 +18,17 @@ Falls jemand zusätzliche CLI-Befehle oder Funktionen vorschlagen möchte (auße
 | -- | ------------------------- | --------------------------------------------------------------------------------------------------- | ------- |----------------|---------------| -------- |
 | 1  | Projektstruktur & Main.hs | Projekt mit `Main`, `CLI`, `DataHandler` aufsetzen; `main` liest Args und ruft `handleCommand` auf. | 2h      | **Eslam**      | —             | ja       |
 | 2  | Datentyp `Record`         | Benutzerdefinierter Typ mit Record Syntax (`id`, `name`, `value`) + `deriving (Show, Eq)`           | 2h      | **Marco**      | Nr 1          | ja       |
-| 3  | Parser für Datei          | JSON-Datei lesen → in `[Record]` umwandeln mit `Data.Aeson.decode`                                 | 2h      | **Gary**       | Nr 2          | ja       |
+| 3  | Parser für Datei          | JSON-Datei lesen → in `[Record]` umwandeln mit `Data.Aeson.decode`                                 | 1h      | **Gary**       | Nr 2          | ja       |
 | 4  | CLI-Command-Handler       | `handleCommand :: String -> [String] -> IO ()` für `--insert`, `--delete`, `--filter`, `--query`    | 3h      | **Eslam**      | Nr 1–3        | teils    |
 | 5  | `--insert`                | Neuen Datensatz speichern (`encodeFile`)                                                            | 2h      | **Marco**      | Nr 4          | ja       |
 | 6  | `--delete`                | Eintrag nach ID löschen (`filter (\r -> id r /= givenID)`)                                          | 2h      | **Marco**      | Nr 4          | ja       |
-| 7  | `--filter`                | Filtern nach Wert (`value > x`)                                                                     | 2h      | **Gary**       | Nr 4          | ja       |
-| 8  | `--query`                 | Einträge nach Feldinhalt anzeigen (z. B. Name enthält Text)                                         | 2h      | **Gary**       | Nr 4          | ja       |
+| 7  | `--filter`                | Filtern nach Wert (`value > x`)                                                                     | 20m      | **Gary**       | Nr 4          | ja       |
+| 8  | `--query`                 | Einträge nach Feldinhalt anzeigen (z. B. Name enthält Text)                                         | 1h      | **Gary**       | Nr 4          | ja       |
 | 9  | Output-Option             | `--out`: Ausgabe in Datei oder stdout (JSON-Format)                                                 | 1h      | **Eslam**      | Nr 4          | ja       |
-| 10 | Fehlerbehandlung          | Falsche Parameter, leere Dateien, I/O-Fehler abfangen                                               | 2h      | **Gary**       | Nr 4–8        |          |
+| 10 | Fehlerbehandlung          | Falsche Parameter, leere Dateien, I/O-Fehler abfangen                                               | 2h      | **Gary**       | Nr 4–8        | ja       |
 | 11 | ID-Duplikate verhindern   | Beim Insert prüfen, ob ID existiert → Fehlermeldung wenn ja                                         | 1h      | **Eslam**      | Nr 5          | ja       |
 | 12 | Tests & Merge             | Review, Merge in `main`                                                                 | 3h      | **Alle**       | alle          |          |
-
+| 13 | Stats                     | Statistik (Anzahl, Summe, Durchschnitt, Min, Max)                                                  | 20m      | **Gary**      | Nr 6          | ja       |
 
 ### ✅ Definition of Done
 

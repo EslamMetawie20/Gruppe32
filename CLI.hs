@@ -1,29 +1,32 @@
 -- Modul für die Verarbeitung der CLI-Befehle
-module CLI 
-    ( handleCommand
-    , insert
-    , delete
-    , filterR   -- die Funktion heißt filterR, um Konflikte mit Prelude.filter zu vermeiden
-    , query
-    , out
-    ) where
+module CLI
+  ( handleCommand,
+    insert,
+    delete,
+    filterR,
+    query,
+    stats,
+    out
+  )
+where
 
-import Record
+import Data.Char (toLower)
+import Data.List (isInfixOf)
+import Text.Read (readMaybe)
+
 import DataHandler
-
-import Data.Char (toLower) -- Query: non case-sensitive search
-import Text.Read (readMaybe) -- Fehlerbehandlung beim lesen
+import Record
 
 -- Entscheidet, welcher Befehl ausgeführt wird
 handleCommand :: String -> [String] -> IO ()
 handleCommand "--insert" args = handleInsert args
-handleCommand "--delete" args = handleDelete args         
+handleCommand "--delete" args = handleDelete args
 handleCommand "--filter" args = handleFilter args
 handleCommand "--query"  args = handleQuery args
-handleCommand "--out" args = handleOut args
+handleCommand "--stats"  args = handleStats args
+handleCommand "--out"    args = handleOut args
 
-                                                            
-handleCommand cmd _           = putStrLn ("Unbekannter Befehl: " ++ cmd)
+handleCommand cmd _ = putStrLn ("Unbekannter Befehl: " ++ cmd)
 
 
 --------------------------------------------------
@@ -31,35 +34,23 @@ handleCommand cmd _           = putStrLn ("Unbekannter Befehl: " ++ cmd)
 --------------------------------------------------
 
 handleInsert :: [String] -> IO ()
-handleInsert (file:idStr:name:valueStr:_) = do 
-    -- ID und Wert von Text zu Zahlen umwandeln
-    let newId    = read idStr
-    let newValue = read valueStr  
-    
-    -- Alte Einträge laden
-    records <- loadRecords file     
+handleInsert (file:idStr:name:valueStr:_) =
+  case (readMaybe idStr :: Maybe Int, readMaybe valueStr :: Maybe Double) of
+    (Nothing, _) -> putStrLn "Fehler: ID muss eine Ganzzahl sein."
+    (_, Nothing) -> putStrLn "Fehler: Wert muss eine Zahl sein."
+    (Just newId, Just newValue) -> do
+      records <- loadRecords file
+      let idExists = any (\r -> Record.id r == newId) records
+      if idExists
+        then putStrLn "Error: Diese ID ist schon vorhanden."
+        else do
+          let newRecord = Record newId name newValue
+          let updated   = records ++ [newRecord]
+          saveRecords file updated
+          putStrLn ("Neuer Eintrag hinzugefügt: " ++ show newRecord)
 
-    -- Duplicate check with guards
-    let idExists = any checkId records
-        checkId r = Record.id r == newId
-
-    if idExists 
-        then putStrLn "Error : diese ID ist schon da"
-        else do 
-            -- Neuen Eintrag erstellen
-            let newRecord = Record newId name newValue   
-            
-            -- Eintrag an Liste anhängen
-            let updated = records ++ [newRecord]  
-            
-            -- Datei aktualisieren
-            saveRecords file updated
-
-            putStrLn ("Neuer Eintrag hinzugefügt: " ++ show newRecord)
-
--- Wenn Argumente fehlen
 handleInsert _ =
-    putStrLn "Benutzung: --insert <Datei> <ID> <Name> <Wert>"
+  putStrLn "Benutzung: --insert <Datei> <ID> <Name> <Wert>"
 
 
 --------------------------------------------------
@@ -67,24 +58,17 @@ handleInsert _ =
 --------------------------------------------------
 
 handleDelete :: [String] -> IO ()
-handleDelete (file:idStr:_) = do
-    -- ID konvertieren
-    let rid = read idStr :: Int
-
-    -- Einträge laden
-    records <- loadRecords file
-
-    -- Eintrag entfernen
-    let updated = filter (\r -> Record.id r /= rid) records
-
-    -- Speichern
-    saveRecords file updated
-
-    putStrLn ("Eintrag mit ID " ++ show rid ++ " wurde gelöscht (falls vorhanden).")
+handleDelete (file:idStr:_) =
+  case readMaybe idStr :: Maybe Int of
+    Nothing -> putStrLn "Fehler: ID muss eine Ganzzahl sein."
+    Just rid -> do
+      records <- loadRecords file
+      let updated = filter (\r -> Record.id r /= rid) records
+      saveRecords file updated
+      putStrLn ("Eintrag mit ID " ++ show rid ++ " wurde gelöscht (falls vorhanden).")
 
 handleDelete _ =
-    putStrLn "Benutzung: --delete <Datei> <ID>"
-
+  putStrLn "Benutzung: --delete <Datei> <ID>"
 
 
 --------------------------------------------------
@@ -92,16 +76,18 @@ handleDelete _ =
 --------------------------------------------------
 
 handleFilter :: [String] -> IO ()
-handleFilter (file:thresholdStr:_) = 
-    case readMaybe thresholdStr of
-        Just threshold -> do
-            records <- loadRecords file
-            let filtered = filter (\r -> value r > threshold) records
-            putStrLn ("Eintreage mit Wert groeßer als " ++ show threshold ++ ":")
-            mapM_ print filtered
-        Nothing -> putStrLn "Fehler: Wert muss eine Zahl sein."
+handleFilter (file:thresholdStr:_) =
+  case readMaybe thresholdStr of
+    Just threshold -> do
+      records <- loadRecords file
+      let filtered = filter (\r -> value r > threshold) records
+      putStrLn ("Einträge mit Wert größer als " ++ show threshold ++ ":")
+      mapM_ print filtered
+    Nothing -> putStrLn "Fehler: Wert muss eine Zahl sein."
 
-handleFilter _ = putStrLn "Benutzung: --filter <Datei> <Wert>"
+handleFilter _ =
+  putStrLn "Benutzung: --filter <Datei> <Wert>"
+
 
 --------------------------------------------------
 -- query (Task 8)
@@ -109,62 +95,69 @@ handleFilter _ = putStrLn "Benutzung: --filter <Datei> <Wert>"
 
 handleQuery :: [String] -> IO ()
 handleQuery (file:searchStr:_) = do
-    -- Einträge laden
-    records <- loadRecords file
+  records <- loadRecords file
+  let searchLower = map toLower searchStr
+  let found = filter (\r -> isInfixOf searchLower (map toLower (Record.name r))) records
+  putStrLn ("Einträge mit Name, der \"" ++ searchStr ++ "\" enthält:")
+  mapM_ print found
 
-    -- Gefundene Einträge anzeigen (non case-sensitive)
-    let searchLower = map toLower searchStr
-    let found = filter (\r -> contains searchLower (map toLower (Record.name r))) records
-
-    putStrLn ("Eintraege mit Name, der \"" ++ searchStr ++ "\" enthaelt:")
-    mapM_ print found
-
-handleQuery _ = putStrLn "Benutzung: --query <Datei> <Suchbegriff>"
-
--- Hilfsfunktion: Prüft, ob sub in s enthalten ist
-contains :: String -> String -> Bool
-contains [] _ = True
-contains _ [] = False
-contains sub (c:cs)
-    | startsWith sub (c:cs) = True
-    | otherwise = contains sub cs
-
--- Hilfsfunktion: Prüft, ob s mit prefix beginnt
-startsWith :: String -> String -> Bool
-startsWith [] _ = True
-startsWith _ [] = False
-startsWith (p:ps) (s:ss)
-    | p == s    = startsWith ps ss
-    | otherwise = False
+handleQuery _ =
+  putStrLn "Benutzung: --query <Datei> <Suchbegriff>"
 
 
+--------------------------------------------------
+-- stats (New)
+--------------------------------------------------
+
+handleStats :: [String] -> IO ()
+handleStats (file:_) = do
+  records <- loadRecords file
+  if null records
+    then putStrLn "Keine Daten vorhanden."
+    else do
+      let values   = map Record.value records
+      let total    = sum values
+      let count    = fromIntegral (length values) :: Double
+      let average  = total / count
+      let minVal   = minimum values
+      let maxVal   = maximum values
+
+      putStrLn "Statistik:"
+      putStrLn ("  Anzahl:       " ++ show (length values))
+      putStrLn ("  Summe:        " ++ show total)
+      putStrLn ("  Durchschnitt: " ++ show average)
+      putStrLn ("  Min:          " ++ show minVal)
+      putStrLn ("  Max:          " ++ show maxVal)
+
+handleStats _ =
+  putStrLn "Benutzung: --stats <Datei>"
 
 
 --------------------------------------------------
 -- out (Task 9)
 --------------------------------------------------
 
-
-
 handleOut :: [String] -> IO ()
 handleOut ("-":file:_) = do
-    records <- loadRecords file
-    -- JSON erzeugen, indem wir temporär in eine Datei speichern
-    let tempFile = "__temp_output.json"
-    saveRecords tempFile records      -- schreibt echtes JSON
-    json <- readFile tempFile
-    putStrLn json                    -- JSON auf Konsole ausgeben
+  records <- loadRecords file
+  let tempFile = "__temp_output.json"
+  saveRecords tempFile records
+  json <- readFile tempFile
+  putStrLn json
 
 handleOut (outfile:file:_) = do
-    records <- loadRecords file
-    saveRecords outfile records      -- direktes JSON in Datei
-    putStrLn ("Ausgabe gespeichert in: " ++ outfile)
-
+  records <- loadRecords file
+  saveRecords outfile records
+  putStrLn ("Ausgabe gespeichert in: " ++ outfile)
 
 handleOut _ =
-    putStrLn "Benutzung: --out <Datei> <JSON-Datei>   oder   --out - <Datei>"
+  putStrLn "Benutzung: --out <Datei> <JSON-Datei>   oder   --out - <Datei>"
 
-    
+
+--------------------------------------------------
+-- Exporte
+--------------------------------------------------
+
 insert :: [String] -> IO ()
 insert = handleInsert
 
@@ -177,6 +170,8 @@ filterR = handleFilter
 query :: [String] -> IO ()
 query = handleQuery
 
+stats :: [String] -> IO ()
+stats = handleStats
+
 out :: [String] -> IO ()
 out = handleOut
-
