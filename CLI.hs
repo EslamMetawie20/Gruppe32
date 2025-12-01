@@ -160,6 +160,7 @@ handleOut (outfile:file:_) = do
     saveRecords outfile records      -- direktes JSON in Datei
     putStrLn ("Ausgabe gespeichert in: " ++ outfile)
 
+
 handleOut _ =
     putStrLn "Benutzung: --out <Datei> <JSON-Datei>   oder   --out - <Datei>"
 

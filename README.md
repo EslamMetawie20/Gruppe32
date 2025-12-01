@@ -37,7 +37,7 @@ Damit das funktioniert, muss in der Main.hs stehen:
 
 ---
 
-#  Starten der App
+# Starten der App
 
 ## 💻 Nutzung in GHCI (zum Testen)
 
@@ -50,7 +50,7 @@ Danach können Befehle direkt ausgeführt werden.
 
 ---
 
-#  JSON-Dateiformat
+# JSON-Dateiformat
 
 Die JSON-Datei enthält eine Liste von Records:
 
@@ -100,18 +100,18 @@ delete ["data.json", "3"]
 
 ---
 
-## 3 **Filtern nach Wert – filter**
+## 3 **Filtern nach Wert – filterR**
 
 Zeigt alle Einträge mit einem Wert größer als X:
 
 ```
-filter <Datei> <Wert>
+filterR <Datei> <Wert>
 ```
 
 **Beispiel:**
 
 ```
-filter ["data.json", "100"]
+filterR ["data.json", "100"]
 ```
 
 ---
@@ -148,16 +148,50 @@ out [<Zieldatei>, <Quelldatei>]
 
 **Beispiel 1:**
 → gibt den JSON-Inhalt auf der Konsole aus
+
 ```
 out ["output.json", "data.json"]
 
 ```
+
 **Beispiel 2:**
 → speichert den JSON-Inhalt in einer neuen Datei
+
 ```
 out ["_", "data.json"]
 
 ```
+
+---
+
+## 6 **Statistische Auswertung – stats**
+
+Berechnet statistische Kennzahlen aller `value`-Felder in der JSON-Datei:
+
+* **Summe**
+* **Durchschnitt (Average)**
+* **Minimum**
+* **Maximum**
+
+```
+stats <Datei>
+```
+
+**Beispiel:**
+
+```
+stats ["data.json"]
+```
+
+**Ausgabe (Beispiel):**
+
+```
+Sum: 355.0
+Average: 118.33
+Min: 65.0
+Max: 200.0
+```
+
 ---
 
 # Nutzung in GHCI (Kurzbefehle)
@@ -170,6 +204,10 @@ delete ["data.json","1"]
 query ["data.json","ax"]
 filterR ["data.json","50"]
 out ["-","data.json"]
+```
+
+```
+stats ["data.json"]
 ```
 
 ---
@@ -191,4 +229,3 @@ Das Tool prüft automatisch:
 Alle Operationen überschreiben die JSON-Datei sofort. Falls nötig vorher ein Backup anlegen.
 
 ---
-
