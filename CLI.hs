@@ -50,7 +50,8 @@ handleInsert (file:idStr:name:valueStr:_) =
           putStrLn ("Neuer Eintrag hinzugefügt: " ++ show newRecord)
 
 handleInsert _ =
-  putStrLn "Benutzung: --insert <Datei> <ID> <Name> <Wert>"
+--   putStrLn "Benutzung: --insert <Datei> <ID> <Name> <Wert>"
+    putStrLn "In GHCI: insert [\"datei\", \"id\", \"name\", \"value\"]"
 
 
 --------------------------------------------------
@@ -68,7 +69,8 @@ handleDelete (file:idStr:_) =
       putStrLn ("Eintrag mit ID " ++ show rid ++ " wurde gelöscht (falls vorhanden).")
 
 handleDelete _ =
-  putStrLn "Benutzung: --delete <Datei> <ID>"
+--   putStrLn "Benutzung: --delete <Datei> <ID>"
+    putStrLn "In GHCI: delete [\"datei\", \"id\"]"
 
 
 --------------------------------------------------
@@ -86,7 +88,8 @@ handleFilter (file:thresholdStr:_) =
     Nothing -> putStrLn "Fehler: Wert muss eine Zahl sein."
 
 handleFilter _ =
-  putStrLn "Benutzung: --filter <Datei> <Wert>"
+--   putStrLn "Benutzung: --filter <Datei> <Wert>"
+    putStrLn "In GHCI: filter ["datei", "threshold"]"
 
 
 --------------------------------------------------
@@ -102,7 +105,8 @@ handleQuery (file:searchStr:_) = do
   mapM_ print found
 
 handleQuery _ =
-  putStrLn "Benutzung: --query <Datei> <Suchbegriff>"
+--   putStrLn "Benutzung: --query <Datei> <Suchbegriff>"
+    putStrLn "In GHCI: query ["datei", "searchStr"]"
 
 
 --------------------------------------------------
@@ -130,7 +134,8 @@ handleStats (file:_) = do
       putStrLn ("  Max:          " ++ show maxVal)
 
 handleStats _ =
-  putStrLn "Benutzung: --stats <Datei>"
+--   putStrLn "Benutzung: --stats <Datei>"
+    putStrLn "In GHCI: stats ["datei"]"
 
 
 --------------------------------------------------
@@ -139,10 +144,7 @@ handleStats _ =
 
 handleOut :: [String] -> IO ()
 handleOut ("-":file:_) = do
-  records <- loadRecords file
-  let tempFile = "__temp_output.json"
-  saveRecords tempFile records
-  json <- readFile tempFile
+  json <- readFile file
   putStrLn json
 
 handleOut (outfile:file:_) = do
@@ -151,7 +153,8 @@ handleOut (outfile:file:_) = do
   putStrLn ("Ausgabe gespeichert in: " ++ outfile)
 
 handleOut _ =
-  putStrLn "Benutzung: --out <Datei> <JSON-Datei>   oder   --out - <Datei>"
+--   putStrLn "Benutzung: --out <Datei> <JSON-Datei>   oder   --out - <Datei>"
+    putStrLn "In GHCI: out [\"datei\", \"jsondatei\"]   oder   out [\"-\", \"jsondatei\"]"
 
 
 --------------------------------------------------
