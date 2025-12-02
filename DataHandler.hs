@@ -4,6 +4,9 @@ module DataHandler
   , saveRecords
   ) where
 
+import qualified Data.ByteString.Lazy as B
+import Data.Aeson.Encode.Pretty (encodePretty)
+
 import Data.Aeson (decodeFileStrict, encodeFile)
 import Record (Record)
 
@@ -28,7 +31,7 @@ loadRecords path = do
 -- Wenn Datei fehlerhaft → ExitFailure mit Fehlermeldung
 saveRecords :: FilePath -> [Record] -> IO ()
 saveRecords path records = do
-    result <- try (encodeFile path records) :: IO (Either IOException ())
+    result <- try (B.writeFile path (encodePretty records)) :: IO (Either IOException ())
     case result of
         Left err -> do
             putStrLn ("Fehler beim Speichern: " ++ show err)

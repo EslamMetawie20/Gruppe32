@@ -212,7 +212,7 @@ handleOut ("-":file:_) = do
 
 handleOut (outfile:file:_) = do
   records <- loadRecords file
-  saveRecords outfile records
+  B.writeFile outfile (encodePretty records)
   putStrLn $ blue ++ "Ausgabe gespeichert in: " ++ outfile ++ reset
 
 handleOut _ =
