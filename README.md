@@ -158,13 +158,13 @@ out ["output.json", "data.json"]
 → speichert den JSON-Inhalt in einer neuen Datei
 
 ```
-out ["_", "data.json"]
+out ["-", "data.json"]
 
 ```
 
 ---
 
-## 6 **Statistische Auswertung – stats**
+## 6 **--stats**
 
 Berechnet statistische Kennzahlen aller `value`-Felder in der JSON-Datei:
 
@@ -191,6 +191,40 @@ Average: 118.33
 Min: 65.0
 Max: 200.0
 ```
+
+
+---
+
+## **--help**
+
+Zeigt alle verfügbaren Befehle des CLI-Tools an.
+
+### **Verwendung:**
+
+```
+help
+```
+
+### **Beschreibung:**
+
+Listet alle unterstützten Befehle mit Kurzbeschreibung und Syntax auf.
+
+---
+
+## **--version**
+
+Gibt die Version des CLI-Tools aus.
+
+### **Verwendung:**
+
+```
+version
+```
+
+### **Beschreibung:**
+
+Zeigt die aktuelle Version des Programms (z. B. „CLI-Tool Version 1.0.0“).
+
 
 ---
 
