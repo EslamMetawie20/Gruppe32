@@ -8,7 +8,15 @@ module CLI
     stats,
     out,
     help,
-    version
+    version,
+    
+    -- Export logic functions for Shell
+    logicInsert,
+    logicDelete,
+    logicFilter,
+    logicQuery,
+    logicStats
+
   )
 where
 
@@ -17,7 +25,7 @@ import Data.List (isInfixOf)
 import Text.Read (readMaybe)
 
 import DataHandler
-import Record
+import Types
 
 -- Entscheidet, welcher Befehl ausgeführt wird
 handleCommand :: String -> [String] -> IO ()
@@ -33,8 +41,8 @@ handleCommand "--version" args = handleVersion args
 
 -- handleCommand "--update" args = handleUpdate args
 
-
-
+-- weitere ideen:
+--  
 -- Interface bauen ?!?
 -- Ein mögliches Interface für CLI-Befehle könnte so aussehen, um Befehle zentral zu definieren und zu verwalten:
 --
@@ -100,6 +108,47 @@ bold  = "\ESC[1m"
 reset = "\ESC[0m"
 
 --------------------------------------------------
+-- Logic Functions (Pure / In-Memory)
+--------------------------------------------------
+
+logicInsert :: Int -> String -> Double -> [Record] -> Either String [Record]
+logicInsert newId name val records =
+  if any (\r -> Types.id r == newId) records
+    then Left "Error: Diese ID ist schon vorhanden."
+    else Right (records ++ [Record newId name val])
+
+logicDelete :: Int -> [Record] -> [Record]
+logicDelete rid records = filter (\r -> Types.id r /= rid) records
+
+logicFilter :: Double -> [Record] -> [Record]
+logicFilter threshold records = filter (\r -> Types.value r > threshold) records
+
+logicQuery :: String -> [Record] -> [Record]
+logicQuery searchStr records =
+  let searchLower = map toLower searchStr
+  in filter (\r -> isInfixOf searchLower (map toLower (Types.name r))) records
+
+logicStats :: [Record] -> String
+logicStats records =
+  if null records
+    then "Keine Daten vorhanden."
+    else
+      let values   = map Types.value records
+          total    = sum values
+          count    = fromIntegral (length values) :: Double
+          average  = total / count
+          minVal   = minimum values
+          maxVal   = maximum values
+      in unlines
+          [ "Statistik:"
+          , "  Anzahl:       " ++ show (length values)
+          , "  Summe:        " ++ show total
+          , "  Durchschnitt: " ++ show average
+          , "  Min:          " ++ show minVal
+          , "  Max:          " ++ show maxVal
+          ]
+
+--------------------------------------------------
 -- Insert (Task 5)
 --------------------------------------------------
 
@@ -110,14 +159,11 @@ handleInsert (file:idStr:name:valueStr:_) =
     (_, Nothing) -> putStrLn $ red ++ "Fehler: Wert muss eine Zahl sein." ++ reset
     (Just newId, Just newValue) -> do
       records <- loadRecords file
-      let idExists = any (\r -> Record.id r == newId) records
-      if idExists
-        then putStrLn $ red ++ "Error: Diese ID ist schon vorhanden." ++ reset
-        else do
-          let newRecord = Record newId name newValue
-          let updated   = records ++ [newRecord]
+      case logicInsert newId name newValue records of
+        Left err -> putStrLn $ red ++ err ++ reset
+        Right updated -> do
           saveRecords file updated
-          putStrLn (green ++ "Neuer Eintrag hinzugefügt: " ++ show newRecord ++ reset)
+          putStrLn (green ++ "Neuer Eintrag hinzugefügt: " ++ show (Record newId name newValue) ++ reset)
 
 handleInsert _ = 
     putStrLn "Benutzung: --insert <Datei> <ID> <Name> <Wert>"
@@ -133,7 +179,7 @@ handleDelete (file:idStr:_) =
     Nothing -> putStrLn $ red ++ "Fehler: ID muss eine Ganzzahl sein." ++ reset
     Just rid -> do
       records <- loadRecords file
-      let updated = filter (\r -> Record.id r /= rid) records
+      let updated = logicDelete rid records
       saveRecords file updated
       putStrLn (green ++ "Eintrag mit ID " ++ show rid ++ " wurde gelöscht (falls vorhanden)." ++ reset)
 
@@ -150,7 +196,7 @@ handleFilter (file:thresholdStr:_) =
   case readMaybe thresholdStr of
     Just threshold -> do
       records <- loadRecords file
-      let filtered = filter (\r -> value r > threshold) records
+      let filtered = logicFilter threshold records
       putStrLn (blue ++ "Einträge mit Wert größer als " ++ show threshold ++ ":" ++ reset)
       mapM_ print filtered
     Nothing -> putStrLn $ red ++ "Fehler: Wert muss eine Zahl sein." ++ reset
@@ -166,14 +212,12 @@ handleFilter _ =
 handleQuery :: [String] -> IO ()
 handleQuery (file:searchStr:_) = do
   records <- loadRecords file
-  let searchLower = map toLower searchStr
-  let found = filter (\r -> isInfixOf searchLower (map toLower (Record.name r))) records
+  let found = logicQuery searchStr records
   putStrLn (blue ++ "Einträge mit Name, der \"" ++ searchStr ++ "\" enthält:" ++ reset)
   mapM_ print found
 
 handleQuery _ =
   putStrLn "Benutzung: --query <Datei> <Suchbegriff>"
-
 
 
 --------------------------------------------------
@@ -183,22 +227,7 @@ handleQuery _ =
 handleStats :: [String] -> IO ()
 handleStats (file:_) = do
   records <- loadRecords file
-  if null records
-    then putStrLn $ red ++ "Keine Daten vorhanden." ++ reset
-    else do
-      let values   = map Record.value records
-      let total    = sum values
-      let count    = fromIntegral (length values) :: Double
-      let average  = total / count
-      let minVal   = minimum values
-      let maxVal   = maximum values
-
-      putStrLn (blue ++ "Statistik:" ++ reset)
-      putStrLn ("  Anzahl:       " ++ show (length values))
-      putStrLn ("  Summe:        " ++ show total)
-      putStrLn ("  Durchschnitt: " ++ show average)
-      putStrLn ("  Min:          " ++ show minVal)
-      putStrLn ("  Max:          " ++ show maxVal)
+  putStrLn (blue ++ logicStats records ++ reset)
 
 handleStats _ =
       putStrLn "Benutzung: --stats <Datei>"

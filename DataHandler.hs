@@ -8,7 +8,7 @@ import qualified Data.ByteString.Lazy as B
 import Data.Aeson.Encode.Pretty (encodePretty)
 
 import Data.Aeson (decodeFileStrict, encodeFile)
-import Record (Record)
+import Types (Record)
 
 import System.FilePath (takeDirectory, takeBaseName, takeExtension, (</>))
 import Data.Time.Clock (getCurrentTime)
