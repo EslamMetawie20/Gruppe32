@@ -7,6 +7,8 @@ module CLI
     query,
     stats,
     out,
+    help,
+    version,
     
     -- Export logic functions for Shell
     logicInsert,
@@ -14,6 +16,7 @@ module CLI
     logicFilter,
     logicQuery,
     logicStats
+
   )
 where
 
@@ -32,9 +35,10 @@ handleCommand "--filter" args = handleFilter args
 handleCommand "--query"  args = handleQuery args
 handleCommand "--stats"  args = handleStats args
 handleCommand "--out"    args = handleOut args
+handleCommand "--help"   args = handleHelp args
+handleCommand "--version" args = handleVersion args
 
--- handleCommand "--help"   args = handleHelp args
--- handleCommand "--version"args = handleVersion args
+
 -- handleCommand "--update" args = handleUpdate args
 
 -- weitere ideen:
@@ -240,11 +244,51 @@ handleOut ("-":file:_) = do
 
 handleOut (outfile:file:_) = do
   records <- loadRecords file
-  saveRecords outfile records
+  B.writeFile outfile (encodePretty records)
   putStrLn $ blue ++ "Ausgabe gespeichert in: " ++ outfile ++ reset
 
 handleOut _ =
   putStrLn "Benutzung: --out <Datei> <JSON-Datei>   oder   --out - <Datei>"
+
+--------------------------------------------------
+-- help
+--------------------------------------------------
+
+handleHelp :: [String] -> IO ()
+handleHelp _ = do
+    putStrLn "Verfügbare Befehle:"
+    putStrLn ""
+    putStrLn "  --insert <Datei> <ID> <Name> <Wert>"
+    putStrLn "      Fügt einen neuen Datensatz ein."
+    putStrLn ""
+    putStrLn "  --delete <Datei> <ID>"
+    putStrLn "      Löscht einen Datensatz anhand seiner ID."
+    putStrLn ""
+    putStrLn "  --filter <Datei> <Wert>"
+    putStrLn "      Zeigt alle Einträge mit value > Wert."
+    putStrLn ""
+    putStrLn "  --query <Datei> <Text>"
+    putStrLn "      Sucht nach Namen, die den Text enthalten."
+    putStrLn ""
+    putStrLn "  --stats <Datei>"
+    putStrLn "      Berechnet Summe, Durchschnitt, Minimum und Maximum."
+    putStrLn ""
+    putStrLn "  --out - <Datei>"
+    putStrLn "      Ausgabe auf die Konsole."
+    putStrLn ""
+    putStrLn "  --out <Zieldatei> <Datei>"
+    putStrLn "      Speichert JSON in neuer Datei."
+    putStrLn ""
+    putStrLn "  --help"
+    putStrLn "      Zeigt diese Hilfe an."
+
+
+--------------------------------------------------
+-- version
+--------------------------------------------------
+handleVersion :: [String] -> IO ()
+handleVersion _ = do
+    putStrLn "CLI-Tool Version 1.0.0"
 
 
 --------------------------------------------------
@@ -268,3 +312,10 @@ stats = handleStats
 
 out :: [String] -> IO ()
 out = handleOut
+
+
+help ::IO ()
+help = handleHelp []
+
+version :: IO ()
+version = handleVersion []

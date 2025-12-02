@@ -4,8 +4,15 @@ module DataHandler
   , saveRecords
   ) where
 
+import qualified Data.ByteString.Lazy as B
+import Data.Aeson.Encode.Pretty (encodePretty)
+
 import Data.Aeson (decodeFileStrict, encodeFile)
 import Types (Record)
+
+import System.FilePath (takeDirectory, takeBaseName, takeExtension, (</>))
+import Data.Time.Clock (getCurrentTime)
+import Data.Time.Format (formatTime, defaultTimeLocale)
 
 import Control.Exception (try, IOException)
 import System.Exit (exitFailure)
@@ -28,9 +35,26 @@ loadRecords path = do
 -- Wenn Datei fehlerhaft → ExitFailure mit Fehlermeldung
 saveRecords :: FilePath -> [Record] -> IO ()
 saveRecords path records = do
-    result <- try (encodeFile path records) :: IO (Either IOException ())
+    result <- try (B.writeFile path (encodePretty records)) :: IO (Either IOException ())
     case result of
         Left err -> do
             putStrLn ("Fehler beim Speichern: " ++ show err)
             exitFailure
-        Right _  -> return ()
+        Right _   -> do
+            -- AUTOMATISCHES BACKUP
+            makeBackup path records
+            return ()
+
+-- Speichert eine Backup-Datei im selben Verzeichnis
+makeBackup :: FilePath -> [Record] -> IO ()
+makeBackup path records = do
+    let dir     = takeDirectory path
+    let base    = takeBaseName path
+    let ext     = takeExtension path
+
+    timestamp <- formatTime defaultTimeLocale "%Y-%m-%d_%H-%M-%S" <$> getCurrentTime
+
+    let backupFile = dir </> (base ++ "_" ++ timestamp ++ ".bak" ++ ext)
+
+    encodeFile backupFile records
+    putStrLn ("Backup erstellt: " ++ backupFile)
