@@ -5,7 +5,7 @@ module DataHandler
   ) where
 
 import Data.Aeson (decodeFileStrict, encodeFile)
-import Record (Record)
+import Types (Record)
 
 import Control.Exception (try, IOException)
 import System.Exit (exitFailure)
