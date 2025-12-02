@@ -7,6 +7,10 @@ module DataHandler
 import Data.Aeson (decodeFileStrict, encodeFile)
 import Record (Record)
 
+import System.FilePath (takeDirectory, takeBaseName, takeExtension, (</>))
+import Data.Time.Clock (getCurrentTime)
+import Data.Time.Format (formatTime, defaultTimeLocale)
+
 import Control.Exception (try, IOException)
 import System.Exit (exitFailure)
 
@@ -33,4 +37,21 @@ saveRecords path records = do
         Left err -> do
             putStrLn ("Fehler beim Speichern: " ++ show err)
             exitFailure
-        Right _  -> return ()
+        Right _   -> do
+            -- AUTOMATISCHES BACKUP
+            makeBackup path records
+            return ()
+
+-- Speichert eine Backup-Datei im selben Verzeichnis
+makeBackup :: FilePath -> [Record] -> IO ()
+makeBackup path records = do
+    let dir     = takeDirectory path
+    let base    = takeBaseName path
+    let ext     = takeExtension path
+
+    timestamp <- formatTime defaultTimeLocale "%Y-%m-%d_%H-%M-%S" <$> getCurrentTime
+
+    let backupFile = dir </> (base ++ "_" ++ timestamp ++ ".bak" ++ ext)
+
+    encodeFile backupFile records
+    putStrLn ("Backup erstellt: " ++ backupFile)
