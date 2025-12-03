@@ -1,265 +1,232 @@
-# 📘 How to Use the Gruppe32 Haskell CLI Tool
+# Gruppe32 - Haskell JSON Manager
 
-> **Was ist dieses Projekt?**
-> Ein gemeinsames Teamprojekt für Gruppe 32 (Eslam, Marco, Gary), bei dem ein vollständiges **Haskell-CLI-Tool** entsteht, das JSON-Dateien lesen, verändern und ausgeben kann.
-
----
-
-## 💻 Nutzung über GHCI
-
-Wenn das Tool **direkt in GHCI** benutzt werden soll, dann so:
-
-### **1) GHCI starten**
-
-Terminal im Projektordner öffnen und eingeben:
-
-```
-ghci
-```
-
-### **2) Main.hs laden**
-
-```
-:l Main.hs
-```
-
-### **3) Kurzbefehle direkt ausführen**
-
-```
-insert ["data.json", "1", "Max", "200"]
-delete ["data.json", "1"]
-filterR ["data.json", "50"]
-query  ["data.json", "ax"]
-out    ["-", "data.json"]
-```
-
-Damit das funktioniert, muss in der Main.hs stehen:
+> **Teamprojekt von Gruppe 32** (Eslam, Marco, Gary)  
+> Ein **Haskell-CLI-Tool** zum Verwalten von JSON-Dateien.
 
 ---
 
-# Starten der App
+## Schnellstart
 
-## 💻 Nutzung in GHCI (zum Testen)
+### Projekt bauen und starten
 
+```bash
+# Projekt complen
+cabal build
+
+# Direkt ausführen (CLI-Modus)
+cabal run grp32-exe -- --help
+
+# Interaktive Shell starten
+cabal run grp32-exe
 ```
-ghci
-:l Main.hs
-```
-
-Danach können Befehle direkt ausgeführt werden.
 
 ---
 
-# JSON-Dateiformat
+## Zwei Nutzungsmodi
 
-Die JSON-Datei enthält eine Liste von Records:
+### 1. **CLI-Modus** (Einzelbefehle)
+Für schnelle Operationen direkt aus dem Terminal:
+
+```bash
+cabal run grp32-exe -- --insert data.json 1 Max 200
+cabal run grp32-exe -- --stats data.json
+```
+
+### 2. **Shell-Modus** (Interaktiv)
+Für mehrere Operationen hintereinander - Änderungen bleiben im Speicher:
+
+```bash
+cabal run grp32-exe
+> data.json
+JSON-Shell> insert 1 Max 200
+JSON-Shell> stats
+JSON-Shell> save
+JSON-Shell> quit
+```
+
+---
+
+## JSON-Dateiformat
 
 ```json
 [
-  {
-    "id": 1,
-    "name": "Max",
-    "value": 200.0
-  }
+  { "id": 1, "name": "Max", "value": 200.0 },
+  { "id": 2, "name": "Anna", "value": 150.5 }
 ]
 ```
 
 ---
 
-# 🛠 Verfügbare CLI-Befehle
+## Verfügbare Befehle
 
-## 1️ **Eintrag einfügen – insert**
+### **insert** - Eintrag einfügen
 
-Fügt einen neuen Datensatz hinzu:
+```bash
+# CLI
+cabal run grp32-exe -- --insert data.json 3 Marco 150
 
+# Shell
+insert 3 Marco 150
 ```
-insert <Datei> <ID> <Name> <Wert>
+
+### **update** - Eintrag aktualisieren
+
+```bash
+# CLI
+cabal run grp32-exe -- --update data.json 3 Marco 175
+
+# Shell
+update 3 Marco 175
 ```
 
-**Beispiel:**
+### **delete** - Eintrag löschen
 
+```bash
+# CLI
+cabal run grp32-exe -- --delete data.json 3
+
+# Shell
+delete 3
 ```
-insert ["data.json", "3", "Marco", "150"]
+
+### **filter** - Nach Wert filtern
+
+Zeigt alle Einträge mit `value > X`:
+
+```bash
+# CLI
+cabal run grp32-exe -- --filter data.json 100
+
+# Shell
+filter 100
+```
+
+### **query** - Nach Name suchen
+
+Findet Einträge, deren Name den Text enthält (case-insensitive):
+
+```bash
+# CLI
+cabal run grp32-exe -- --query data.json ax
+
+# Shell
+query ax
+```
+
+### **stats** - Statistiken anzeigen
+
+Berechnet Summe, Durchschnitt, Minimum und Maximum:
+
+```bash
+# CLI
+cabal run grp32-exe -- --stats data.json
+
+# Shell
+stats
+```
+
+**Ausgabe:**
+```
+Statistik:
+  Anzahl:       3
+  Summe:        525.5
+  Durchschnitt: 175.17
+  Min:          150.0
+  Max:          200.0
+```
+
+### **print / list** - Alle Einträge anzeigen
+
+```bash
+# CLI
+cabal run grp32-exe -- --print data.json
+
+# Shell
+list
+```
+
+### **save** - Speichern
+
+```bash
+# CLI (in neue Datei)
+cabal run grp32-exe -- --save data.json backup.json
+
+# Shell
+save              # In aktuelle Datei
+save backup.json  # In neue Datei
+```
+
+### **help** - Hilfe anzeigen
+
+```bash
+cabal run grp32-exe -- --help
 ```
 
 ---
 
-## 2️ **Eintrag löschen – delete**
+## Nutzung in GHCI
 
-Löscht einen Datensatz anhand seiner ID:
-
-```
-delete <Datei> <ID>
+```bash
+cabal repl
 ```
 
-**Beispiel:**
-
-```
-delete ["data.json", "3"]
-```
-
----
-
-## 3 **Filtern nach Wert – filterR**
-
-Zeigt alle Einträge mit einem Wert größer als X:
-
-```
-filterR <Datei> <Wert>
-```
-
-**Beispiel:**
-
-```
-filterR ["data.json", "100"]
-```
-
----
-
-## 4 **Suche nach Name – query**
-
-Findet Einträge, deren Name einen bestimmten Text enthält:
-
-```
-query <Datei> <Text>
-```
-
-**Beispiel:**
-
-```
+```haskell
+-- Module laden (automatisch)
+-- Befehle ausführen:
+insert ["data.json", "1", "Max", "200"]
+delete ["data.json", "1"]
+filterRecords ["data.json", "50"]
 query ["data.json", "ax"]
-```
-
----
-
-## 5 **Ausgabe – --out**
-
-### Ausgabe auf Konsole:
-
-```
-out - <Datei>
-```
-
-### Ausgabe in Datei:
-
-```
-out [<Zieldatei>, <Quelldatei>]
-```
-
-**Beispiel 1:**
-→ gibt den JSON-Inhalt auf der Konsole aus
-
-```
-out ["output.json", "data.json"]
-
-```
-
-**Beispiel 2:**
-→ speichert den JSON-Inhalt in einer neuen Datei
-
-```
-out ["-", "data.json"]
-
-```
-
----
-
-## 6 **--stats**
-
-Berechnet statistische Kennzahlen aller `value`-Felder in der JSON-Datei:
-
-* **Summe**
-* **Durchschnitt (Average)**
-* **Minimum**
-* **Maximum**
-
-```
-stats <Datei>
-```
-
-**Beispiel:**
-
-```
 stats ["data.json"]
-```
-
-**Ausgabe (Beispiel):**
-
-```
-Sum: 355.0
-Average: 118.33
-Min: 65.0
-Max: 200.0
-```
-
-
----
-
-## **--help**
-
-Zeigt alle verfügbaren Befehle des CLI-Tools an.
-
-### **Verwendung:**
-
-```
+printRecords ["data.json"]
 help
 ```
 
-### **Beschreibung:**
-
-Listet alle unterstützten Befehle mit Kurzbeschreibung und Syntax auf.
-
 ---
 
-## **--version**
-
-Gibt die Version des CLI-Tools aus.
-
-### **Verwendung:**
-
-```
-version
-```
-
-### **Beschreibung:**
-
-Zeigt die aktuelle Version des Programms (z. B. „CLI-Tool Version 1.0.0“).
-
-
----
-
-# Nutzung in GHCI (Kurzbefehle)
-
-Wenn Kurzbefehle aktiviert sind:
-
-```
-insert ["data.json","1","Max","200"]
-delete ["data.json","1"]
-query ["data.json","ax"]
-filterR ["data.json","50"]
-out ["-","data.json"]
-```
-
-```
-stats ["data.json"]
-```
-
----
-
-# Fehlerbehandlung
+## Fehlerbehandlung
 
 Das Tool prüft automatisch:
 
-* fehlende Parameter
-* ungültige Zahlen
-* leere Dateien
-* ungültige IDs
-* doppelte IDs bei --insert
+- Fehlende Parameter
+- Ungültige Zahlen (ID muss Int, Wert muss Double sein)
+- Doppelte IDs bei `insert`
+- Nicht existierende IDs bei `update`/`delete`
+- Fehlende oder ungültige JSON-Dateien
+- Automatische Backups vor dem Speichern
 
 ---
 
-# Hinweis
+### Projekt-Struktur
 
-Alle Operationen überschreiben die JSON-Datei sofort. Falls nötig vorher ein Backup anlegen.
+```
+grp32/
+├── grp32.cabal        # Projekt-Konfiguration
+├── src/
+│   ├── Main.hs        # Einstiegspunkt
+│   ├── CLI.hs         # Parsing & Befehle
+│   ├── Shell.hs       # Interaktive Shell
+│   ├── DataHandler.hs # Datei-IO
+│   └── Types.hs       # Datentypen
+├── docs/
+│   └── Entwickler_Handbuch.md
+└── tests/
+    └── test_suite.py
+```
+
+### Build-Befehle
+
+```bash
+cabal build      # Kompilieren
+cabal run        # Ausführen
+cabal repl       # GHCI mit Projekt
+cabal clean      # Build-Artefakte löschen
+```
 
 ---
+
+## Hinweis
+
+- **CLI-Modus**: Änderungen werden sofort gespeichert
+- **Shell-Modus**: Änderungen bleiben im Speicher bis `save`
+- Vor dem Speichern wird automatisch ein Backup erstellt (`.bak.json`)

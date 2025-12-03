@@ -1,104 +1,130 @@
+-- | Shell.hs - Interaktiver Shell-Modus (REPL)
+--
+-- Die Shell läuft in einer Endlosschleife und wartet auf Benutzereingaben.
+--
+-- Besonderheit: Die Shell hält den Zustand (Records) im Speicher!
+-- Änderungen werden erst bei 'save' in die Datei geschrieben.
 module Shell where
-import qualified Data.ByteString.Lazy.Char8 as B
-import Data.Aeson.Encode.Pretty (encodePretty)
+
+import qualified Data.ByteString.Lazy.Char8 as B  -- Für JSON-Ausgabe
+import Data.Aeson.Encode.Pretty (encodePretty)    -- Schöne JSON-Formatierung
 import CLI (parseCommand, logicInsert, logicUpdate, logicDelete, logicFilter, logicQuery, logicStats)
 import DataHandler
 import Types
-import System.IO (hFlush, stdout)
+import System.IO (hFlush, stdout)  -- Für sofortige Ausgabe (flush)
 import Text.Read (readMaybe)
 
--- Startet den Shell-Modus
+-- | Startet den Shell-Modus
 shell :: IO ()
 shell = do
-    putStrLn "Willkommen im Shell-Modus!"
-    putStrLn "Bitte Dateiname eingeben (z.B. data.json):"
+    putStrLn $ blue ++ bold ++ "Willkommen im Shell-Modus!" ++ reset
+    putStrLn $ blue ++ "Bitte Dateiname eingeben (z.B. data.json):" ++ reset
+    putStrLn $ blue ++ "Oder 'create' zum Erstellen einer neuen Datei." ++ reset
     putStr "> "
-    hFlush stdout
+    hFlush stdout  -- Stellt sicher, dass "> " sofort angezeigt wird
     filename <- getLine
     if null filename
-        then shell -- Retry if empty
+        then shell  -- Leere Eingabe -> nochmal fragen
         else if filename == "create"
             then do
-                putStrLn "Dateiname für neue Datei eingeben (z.B. data.json):"
+                -- Neue leere Datei erstellen
+                putStrLn $ blue ++ "Dateiname für neue Datei eingeben (z.B. data.json):" ++ reset
                 putStr "> "
                 hFlush stdout
                 newFilename <- getLine
-                saveRecords newFilename []
-                putStrLn $ "Datei '" ++ newFilename ++ "' erstellt."
+                saveRecords newFilename []  -- Leere Liste speichern
+                putStrLn $ green ++ "Datei '" ++ newFilename ++ "' erstellt." ++ reset
                 shell
         else do
-            -- Versuche Datei zu laden
+            -- Existierende Datei laden
             records <- loadRecords filename
-            putStrLn $ "Datei '" ++ filename ++ "' geladen. " ++ show (length records) ++ " Einträge."
-            runShell filename records
+            putStrLn $ green ++ "Datei '" ++ filename ++ "' geladen. " ++ show (length records) ++ " Einträge." ++ reset
+            runShell filename records  -- Hauptschleife starten
 
--- Die Hauptschleife der Shell
--- State: Dateiname (zum Speichern) und aktuelle Liste der Records
+-- | Hauptschleife der Shell (REPL)
+--
+-- Parameter:
+--   filename: Dateiname zum Speichern
+--   records:  Aktuelle Liste der Records (im Speicher!)
+--
+-- Die Funktion ruft sich selbst rekursiv auf (Endlosschleife).
+-- Bei 'quit' wird die Rekursion beendet.
+--
+-- Wichtig: 'records' wird bei Änderungen als 'updated' weitergegeben!
 runShell :: FilePath -> [Record] -> IO ()
 runShell filename records = do
     putStr "JSON-Shell> "
     hFlush stdout
     input <- getLine
-    let argsList = words input
+    let argsList = words input  -- "insert 1 Max 100" -> ["insert", "1", "Max", "100"]
     
     if null argsList
-        then runShell filename records
+        then runShell filename records  -- Leere Eingabe ignorieren
         else do
-            let (cmdStr:args) = argsList
+            let (cmdStr:args) = argsList  -- Erstes Wort = Befehl, Rest = Argumente
             
+            -- parseCommand gibt Either String Command zurück
+            -- Left = Fehler, Right = erfolgreich geparster Befehl
             case parseCommand cmdStr args of
                 Left err -> do
-                    putStrLn err
-                    runShell filename records
+                    putStrLn $ red ++ err ++ reset
+                    runShell filename records  -- Gleicher State, nochmal
                 
                 Right command -> executeShellCommand filename records command
 
+-- | Führt einen geparsten Befehl aus
+--
+-- Pattern Matching auf alle möglichen Commands.
+-- Bei erfolgreichen Änderungen wird 'updated' (neue Liste) weitergegeben.
+-- Bei Fehlern bleibt 'records' (alte Liste) erhalten.
 executeShellCommand :: FilePath -> [Record] -> Command -> IO ()
 executeShellCommand filename records cmd = case cmd of
-    Quit -> putStrLn "Bye!"
+    Quit -> putStrLn $ blue ++ "Bye!" ++ reset
     
     Help -> do
-        putStrLn "Verfügbare Befehle:"
-        putStrLn "  insert <ID> <Name> <Wert>  - Fügt einen Eintrag hinzu"
-        putStrLn "  update <ID> <Name> <Wert>  - Aktualisiert einen Eintrag"
-        putStrLn "  delete <ID>                - Löscht einen Eintrag"
-        putStrLn "  filter <Wert>              - Zeigt Einträge > Wert"
-        putStrLn "  query <Name>               - Sucht nach Name"
-        putStrLn "  stats                      - Zeigt Statistik"
-        putStrLn "  list                       - Zeigt alle Einträge (formatiert)"
-        putStrLn "  save [Name]                - Speichert Änderungen (optional unter neuem Namen)"
-        putStrLn "  quit                       - Beendet die Shell"
+        putStrLn $ blue ++ bold ++ "Verfügbare Befehle:" ++ reset
+        putStrLn $ green ++ "  insert <ID> <Name> <Wert>" ++ reset ++ "  - Fügt einen Eintrag hinzu"
+        putStrLn $ green ++ "  update <ID> <Name> <Wert>" ++ reset ++ "  - Aktualisiert einen Eintrag"
+        putStrLn $ green ++ "  delete <ID>" ++ reset ++ "                - Löscht einen Eintrag"
+        putStrLn $ green ++ "  filter <Wert>" ++ reset ++ "              - Zeigt Einträge > Wert"
+        putStrLn $ green ++ "  query <Name>" ++ reset ++ "               - Sucht nach Name"
+        putStrLn $ green ++ "  stats" ++ reset ++ "                      - Zeigt Statistik"
+        putStrLn $ green ++ "  list" ++ reset ++ "                       - Zeigt alle Einträge (formatiert)"
+        putStrLn $ green ++ "  save [Name]" ++ reset ++ "                - Speichert Änderungen (optional unter neuem Namen)"
+        putStrLn $ green ++ "  quit" ++ reset ++ "                       - Beendet die Shell"
         runShell filename records
 
-    Insert i n v -> do
-        case logicInsert i n v records of
+    Insert recordId name value -> do
+        case logicInsert recordId name value records of
             Left err -> do
-                putStrLn err
+                putStrLn $ red ++ err ++ reset
                 runShell filename records
             Right updated -> do
-                putStrLn "Erfolg: Eintrag hinzugefügt."
+                putStrLn $ green ++ "Erfolg: Eintrag hinzugefügt:" ++ reset
+                -- Zeige den neu erstellten Record direkt an
+                B.putStrLn (encodePretty (Record recordId name value))
                 runShell filename updated
 
-    Update i n v -> do
-        case logicUpdate i n v records of
+    Update recordId name value -> do
+        case logicUpdate recordId name value records of
             Left err -> do
-                putStrLn err
+                putStrLn $ red ++ err ++ reset
                 runShell filename records
             Right updated -> do
-                putStrLn "Erfolg: Eintrag aktualisiert."
+                putStrLn $ green ++ "Erfolg: Eintrag aktualisiert." ++ reset
                 runShell filename updated
 
-    Delete i -> do
-        case logicDelete i records of
+    Delete recordId -> do
+        case logicDelete recordId records of
             Left err -> do
-                putStrLn err
+                putStrLn $ red ++ err ++ reset
                 runShell filename records
             Right updated -> do
-                putStrLn $ "Erfolg: Eintrag mit ID " ++ show i ++ " gelöscht."
+                putStrLn $ green ++ "Erfolg: Eintrag mit ID " ++ show recordId ++ " gelöscht." ++ reset
                 runShell filename updated
 
-    Filter v -> do
-        let filtered = logicFilter v records
+    Filter minValue -> do
+        let filtered = logicFilter minValue records
         B.putStrLn (encodePretty filtered)
         runShell filename records
 
@@ -114,23 +140,19 @@ executeShellCommand filename records cmd = case cmd of
     List -> do
         B.putStrLn (encodePretty records)
         runShell filename records
-    
-    Print -> do -- Alias for List in Shell
-        B.putStrLn (encodePretty records)
-        runShell filename records
 
     Save maybeFile -> do
         let targetFile = case maybeFile of
-                            Just f  -> f
+                            Just file  -> file
                             Nothing -> filename
         saveRecords targetFile records
-        putStrLn $ "Gespeichert in " ++ targetFile
+        putStrLn $ green ++ "Gespeichert in " ++ targetFile ++ reset
         runShell filename records
 
     Version -> do
-        putStrLn "Haskell JSON Manager v1.0.0"
+        putStrLn $ blue ++ "Haskell JSON Manager v1.0.0" ++ reset
         runShell filename records
 
-    Unknown c -> do
-        putStrLn $ "Befehl nicht erkannt: " ++ c ++ ". Nutze 'help' für Hilfe."
+    Unknown unknownCmd -> do
+        putStrLn $ red ++ "Befehl nicht erkannt: " ++ unknownCmd ++ ". Nutze 'help' für Hilfe." ++ reset
         runShell filename records

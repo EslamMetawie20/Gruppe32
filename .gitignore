@@ -28,3 +28,5 @@ test_data_copy.json
 .vscode/
 .idea/
 *.lock
+*.test
+*.json
